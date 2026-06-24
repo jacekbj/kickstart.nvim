@@ -388,12 +388,40 @@ require('lazy').setup({
         -- You can put your default mappings / updates / etc. in here
         --  All the info you're looking for is in `:help telescope.setup()`
         --
-        -- defaults = {
-        --   mappings = {
-        --     i = { ['<c-enter>'] = 'to_fuzzy_refine' },
-        --   },
-        -- },
+        defaults = {
+          layout_config = {
+            bottom_pane = {
+              height = 25,
+              preview_cutoff = 120,
+              prompt_position = 'top',
+            },
+            center = {
+              height = 0.4,
+              preview_cutoff = 40,
+              prompt_position = 'top',
+              width = 0.5,
+            },
+            cursor = {
+              height = 0.9,
+              preview_cutoff = 40,
+              width = 0.8,
+            },
+            horizontal = {
+              height = 0.9,
+              preview_cutoff = 160,
+              prompt_position = 'bottom',
+              width = 0.95,
+            },
+            vertical = {
+              height = 0.9,
+              preview_cutoff = 40,
+              prompt_position = 'bottom',
+              width = 0.8,
+            },
+          },
+        },
         -- pickers = {}
+
         extensions = {
           ['ui-select'] = { require('telescope.themes').get_dropdown() },
         },
@@ -610,6 +638,24 @@ require('lazy').setup({
         --
         -- But for many setups, the LSP (`ts_ls`) will work just fine
         -- ts_ls = {},
+
+        pyrefly = {},
+        pylsp = {
+          settings = {
+            pylsp = {
+              plugins = {
+                pyflakes = { enabled = false },
+                pycodestyle = { enabled = false },
+                autopep8 = { enabled = false },
+                yapf = { enabled = false },
+                mccabe = { enabled = false },
+                pylsp_mypy = { enabled = true },
+                pylsp_black = { enabled = false },
+                pylsp_isort = { enabled = true },
+              },
+            },
+          },
+        },
 
         stylua = {}, -- Used to format Lua code
 
@@ -925,6 +971,32 @@ require('lazy').setup({
     init = function() vim.g.mkdp_filetypes = { 'markdown' } end,
     ft = { 'markdown' },
   },
+  {
+    'NeogitOrg/neogit',
+    lazy = true,
+    dependencies = {
+      -- Only one of these is needed.
+      'sindrets/diffview.nvim', -- optional
+      'esmuellert/codediff.nvim', -- optional
+
+      -- For a custom log pager
+      'm00qek/baleia.nvim', -- optional
+
+      -- Only one of these is needed.
+      'nvim-telescope/telescope.nvim', -- optional
+      'ibhagwan/fzf-lua', -- optional
+      'nvim-mini/mini.pick', -- optional
+      'folke/snacks.nvim', -- optional
+    },
+    cmd = 'Neogit',
+    keys = {
+      { '<leader>gg', '<cmd>Neogit<cr>', desc = 'Show Neogit UI' },
+    },
+  },
+  {
+    'Pocco81/auto-save.nvim',
+    config = function() require('auto-save').setup {} end,
+  },
 
   -- The following comments only work if you have downloaded the kickstart repo, not just copy pasted the
   -- init.lua. If you want these files, they are in the repository, so you can just download them and
@@ -935,18 +1007,18 @@ require('lazy').setup({
   --  Here are some example plugins that I've included in the Kickstart repository.
   --  Uncomment any of the lines below to enable them (you will need to restart nvim).
   --
-  -- require 'kickstart.plugins.debug',
+  require 'kickstart.plugins.debug',
   -- require 'kickstart.plugins.indent_line',
   -- require 'kickstart.plugins.lint',
   -- require 'kickstart.plugins.autopairs',
-  -- require 'kickstart.plugins.neo-tree',
+  require 'kickstart.plugins.neo-tree',
   -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommended keymaps
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    This is the easiest way to modularize your config.
   --
   --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
-  -- { import = 'custom.plugins' },
+  { import = 'custom.plugins' },
   --
   -- For additional information with loading, sourcing and examples see `:help lazy.nvim-🔌-plugin-spec`
   -- Or use telescope!
