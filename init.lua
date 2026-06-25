@@ -189,6 +189,17 @@ vim.diagnostic.config {
 
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
 
+-- Neo-tree file [E]xplorer keymaps, all nested under <leader>e so which-key
+-- groups them together (see the which-key `spec` below for the group label).
+--  See `:help neo-tree`. Note: `\` already reveals the tree (see neo-tree.lua).
+--  `/` is intentionally NOT used (it's the search command); pipe `|` toggles instead.
+vim.keymap.set('n', '|', '<cmd>Neotree toggle<CR>', { desc = 'Neo-tree: toggle explorer' })
+vim.keymap.set('n', '<leader>ee', '<cmd>Neotree toggle<CR>', { desc = '[E]xplorer toggle' })
+vim.keymap.set('n', '<leader>ef', '<cmd>Neotree focus<CR>', { desc = '[E]xplorer [F]ocus' })
+vim.keymap.set('n', '<leader>er', '<cmd>Neotree reveal<CR>', { desc = '[E]xplorer [R]eveal current file' })
+vim.keymap.set('n', '<leader>eb', '<cmd>Neotree toggle show buffers right<CR>', { desc = '[E]xplorer [B]uffers' })
+vim.keymap.set('n', '<leader>eg', '<cmd>Neotree float git_status<CR>', { desc = '[E]xplorer [G]it status' })
+
 -- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
 -- for people to discover. Otherwise, you normally need to press <C-\><C-n>, which
 -- is not what someone will guess without a bit more experience.
@@ -317,6 +328,7 @@ require('lazy').setup({
       -- Document existing key chains
       spec = {
         { '<leader>s', group = '[S]earch', mode = { 'n', 'v' } },
+        { '<leader>e', group = '[E]xplorer (Neo-tree)' },
         { '<leader>t', group = '[T]oggle' },
         { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } }, -- Enable gitsigns recommended keymaps first
         { 'gr', group = 'LSP Actions', mode = { 'n' } },
