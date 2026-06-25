@@ -328,6 +328,7 @@ require('lazy').setup({
       -- Document existing key chains
       spec = {
         { '<leader>s', group = '[S]earch', mode = { 'n', 'v' } },
+        { '<leader>S', group = '[S]ession (mini)' },
         { '<leader>e', group = '[E]xplorer (Neo-tree)' },
         { '<leader>t', group = '[T]oggle' },
         { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } }, -- Enable gitsigns recommended keymaps first
@@ -651,25 +652,13 @@ require('lazy').setup({
         -- But for many setups, the LSP (`ts_ls`) will work just fine
         -- ts_ls = {},
 
+        -- Python: pyrefly for types + auto-import code actions (test with `gra`),
+        -- ruff for linting / import organization / formatting.
         pyrefly = {},
-        pylsp = {
-          settings = {
-            pylsp = {
-              plugins = {
-                pyflakes = { enabled = false },
-                pycodestyle = { enabled = false },
-                autopep8 = { enabled = false },
-                yapf = { enabled = false },
-                mccabe = { enabled = false },
-                pylsp_mypy = { enabled = true },
-                pylsp_black = { enabled = false },
-                pylsp_isort = { enabled = true },
-              },
-            },
-          },
-        },
+        ruff = {},
 
-        stylua = {}, -- Used to format Lua code
+        -- TypeScript/JavaScript
+        vtsls = {},
 
         -- Special Lua Config, as recommended by neovim help docs
         lua_ls = {
@@ -710,7 +699,7 @@ require('lazy').setup({
       -- You can press `g?` for help in this menu.
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
-        -- You can add other tools here that you want Mason to install
+        'stylua', -- Lua formatter, run via conform (not an LSP)
       })
 
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
@@ -754,8 +743,9 @@ require('lazy').setup({
       end,
       formatters_by_ft = {
         lua = { 'stylua' },
-        -- Conform can also run multiple formatters sequentially
-        -- python = { "isort", "black" },
+        -- Run sequentially: ruff sorts/organizes imports (the isort `I` rules),
+        -- then ruff formats. `ruff format` alone does NOT touch import order.
+        python = { 'ruff_organize_imports', 'ruff_format' },
         --
         -- You can use 'stop_after_first' to run the first available formatter from the list
         -- javascript = { "prettierd", "prettier", stop_after_first = true },
@@ -906,6 +896,19 @@ require('lazy').setup({
       -- - sd'   - [S]urround [D]elete [']quotes
       -- - sr)'  - [S]urround [R]eplace [)] [']
       require('mini.surround').setup()
+
+      -- Session management: save/restore open buffers, windows, layout, cwd.
+      --  Sessions live in stdpath('data')/sessions. Use the helpers mapped below,
+      --  or call the API directly (e.g. `:lua MiniSessions.write('mywork')`).
+      require('mini.sessions').setup {
+        -- autoread = false: don't auto-load a session on startup
+        -- autowrite = true: auto-save the *current* session on exit
+        autowrite = true,
+      }
+      vim.keymap.set('n', '<leader>Ss', function() MiniSessions.write(vim.fn.input 'Session name: ') end, { desc = '[S]ession [S]ave (named)' })
+      vim.keymap.set('n', '<leader>Sw', function() MiniSessions.write() end, { desc = '[S]ession [W]rite (current)' })
+      vim.keymap.set('n', '<leader>Sl', function() MiniSessions.select 'read' end, { desc = '[S]ession [L]oad (pick)' })
+      vim.keymap.set('n', '<leader>Sd', function() MiniSessions.select 'delete' end, { desc = '[S]ession [D]elete (pick)' })
 
       -- Simple and easy statusline.
       --  You could remove this setup call if you don't like it,
