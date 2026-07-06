@@ -25,6 +25,9 @@ return {
 
     -- Add your own debuggers here
     'leoluz/nvim-dap-go',
+
+    -- Shows variable values as inline virtual text while debugging
+    'theHamsta/nvim-dap-virtual-text',
   },
   keys = {
     -- Basic debugging keymaps, feel free to change to your liking!
@@ -94,6 +97,10 @@ return {
     --   local hl = (type == 'Stopped') and 'DapStop' or 'DapBreak'
     --   vim.fn.sign_define(tp, { text = icon, texthl = hl, numhl = hl })
     -- end
+
+    -- Inline virtual text showing variable values during a debug session
+    ---@diagnostic disable-next-line: missing-fields
+    require('nvim-dap-virtual-text').setup {}
 
     dap.listeners.after.event_initialized['dapui_config'] = dapui.open
     dap.listeners.before.event_terminated['dapui_config'] = dapui.close

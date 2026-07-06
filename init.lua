@@ -139,6 +139,10 @@ vim.o.timeoutlen = 300
 vim.o.splitright = true
 vim.o.splitbelow = true
 
+-- Source project-local `.nvim.lua` / `.nvimrc` files (e.g. per-project linting).
+-- Neovim prompts to `:trust` each file the first time it is seen.
+vim.o.exrc = true
+
 -- Sets how neovim will display certain whitespace characters in the editor.
 --  See `:help 'list'`
 --  and `:help 'listchars'`
@@ -331,6 +335,7 @@ require('lazy').setup({
         { '<leader>S', group = '[S]ession (mini)' },
         { '<leader>e', group = '[E]xplorer (Neo-tree)' },
         { '<leader>t', group = '[T]oggle' },
+        { '<leader>g', group = '[G]it' },
         { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } }, -- Enable gitsigns recommended keymaps first
         { 'gr', group = 'LSP Actions', mode = { 'n' } },
         { 'gp', group = '[P]eek (Glance)', mode = { 'n' } },
@@ -460,6 +465,25 @@ require('lazy').setup({
         function() require('telescope').extensions.live_grep_args.live_grep_args() end,
         { desc = '[S]earch by [G]rep (args)' }
       )
+      -- Browse symbol definitions in a chosen directory (LSP-free; ripgrep-backed).
+      -- Prompts for a directory (defaults to the current file's), then opens live_grep_args
+      -- scoped to it, pre-seeded with a regex matching common definition keywords. Clear the
+      -- prompt to grep freely, or append ' -- <rg flags>' (e.g. ' -- -tpy') to narrow further.
+      vim.keymap.set('n', '<leader>sS', function()
+        local dir = vim.fn.expand '%:p:h'
+        if dir == '' then
+          dir = vim.fn.getcwd()
+        end
+        vim.ui.input({ prompt = 'Search symbols in dir: ', default = dir, completion = 'dir' }, function(input)
+          if not input or input == '' then
+            return
+          end
+          require('telescope').extensions.live_grep_args.live_grep_args {
+            search_dirs = { input },
+            default_text = [[\b(def|class|function|interface|struct|enum|trait|impl)\b]],
+          }
+        end)
+      end, { desc = '[S]earch [S]ymbols in directory' })
       vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
       vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
       vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
@@ -979,8 +1003,18 @@ require('lazy').setup({
   },
   {
     'sindrets/diffview.nvim',
-    dependencies = 'nvim-lua/plenary.nvim', -- Required dependency
-    cmd = { 'DiffviewOpen', 'DiffviewClose', 'DiffviewToggleFiles', 'DiffviewFocusFiles' }, -- Optional: lazy load on commands
+    dependencies = {
+      'nvim-lua/plenary.nvim', -- Required dependency
+      'nvim-tree/nvim-web-devicons', -- file icons in the file panel
+    },
+    cmd = { 'DiffviewOpen', 'DiffviewClose', 'DiffviewToggleFiles', 'DiffviewFocusFiles', 'DiffviewFileHistory' }, -- lazy load on commands
+    keys = {
+      { '<leader>gd', '<cmd>DiffviewOpen<cr>', desc = '[D]iff working tree (split)' },
+      { '<leader>gD', '<cmd>DiffviewOpen HEAD~1<cr>', desc = '[D]iff vs previous commit' },
+      { '<leader>gh', '<cmd>DiffviewFileHistory %<cr>', desc = 'File [h]istory (current file)' },
+      { '<leader>gH', '<cmd>DiffviewFileHistory<cr>', desc = 'File [H]istory (whole repo)' },
+      { '<leader>gq', '<cmd>DiffviewClose<cr>', desc = 'Close Diffview ([q]uit)' },
+    },
     config = function()
       require('diffview').setup {
         -- Custom config goes here (see below)
@@ -1039,7 +1073,7 @@ require('lazy').setup({
   --
   require 'kickstart.plugins.debug',
   -- require 'kickstart.plugins.indent_line',
-  -- require 'kickstart.plugins.lint',
+  require 'kickstart.plugins.lint',
   -- require 'kickstart.plugins.autopairs',
   require 'kickstart.plugins.neo-tree',
   -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommended keymaps
