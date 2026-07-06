@@ -91,7 +91,7 @@ vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
 -- Set to true if you have a Nerd Font installed and selected in the terminal
-vim.g.have_nerd_font = false
+vim.g.have_nerd_font = true
 
 -- [[ Setting options ]]
 -- See `:help vim.o`
@@ -379,8 +379,8 @@ require('lazy').setup({
       { 'nvim-telescope/telescope-ui-select.nvim' },
       { 'nvim-telescope/telescope-live-grep-args.nvim' },
 
-      -- Useful for getting pretty icons, but requires a Nerd Font.
-      { 'nvim-tree/nvim-web-devicons', enabled = vim.g.have_nerd_font },
+      -- Pretty file-type icons (configured as a standalone spec below).
+      { 'nvim-tree/nvim-web-devicons' },
     },
     config = function()
       -- Telescope is a fuzzy finder that comes with a lot of different things that
@@ -991,6 +991,13 @@ require('lazy').setup({
         end,
       })
     end,
+  },
+  {
+    -- File-type/glyph icons used by neo-tree, nvim-tree, telescope, etc.
+    -- Requires a Nerd Font in the terminal to render; without one, glyphs show
+    -- as tofu boxes. `default = true` guarantees an icon for unknown filetypes.
+    'nvim-tree/nvim-web-devicons',
+    config = function() require('nvim-web-devicons').setup { default = true } end,
   },
   {
     'nvim-tree/nvim-tree.lua',
