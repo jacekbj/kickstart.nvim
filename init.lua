@@ -233,6 +233,12 @@ vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper win
 -- vim.keymap.set("n", "<C-S-j>", "<C-w>J", { desc = "Move window to the lower" })
 -- vim.keymap.set("n", "<C-S-k>", "<C-w>K", { desc = "Move window to the upper" })
 
+-- Jumplist navigation, moved off <C-o>/<C-i> since zellij's default config
+-- intercepts those globally (Ctrl-o = session mode, and every other Ctrl/Alt
+-- combo is claimed too). Leader-prefixed plain keys pass through untouched.
+vim.keymap.set('n', '<leader>o', '<C-o>', { desc = 'Jump back' })
+vim.keymap.set('n', '<leader>i', '<C-i>', { desc = 'Jump forward' })
+
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
 
@@ -335,6 +341,7 @@ require('lazy').setup({
         { '<leader>S', group = '[S]ession (mini)' },
         { '<leader>e', group = '[E]xplorer (Neo-tree)' },
         { '<leader>t', group = '[T]oggle' },
+        { '<leader>T', group = '[T]est (Pytest)' },
         { '<leader>g', group = '[G]it' },
         { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } }, -- Enable gitsigns recommended keymaps first
         { 'gr', group = 'LSP Actions', mode = { 'n' } },
@@ -409,6 +416,18 @@ require('lazy').setup({
         --  All the info you're looking for is in `:help telescope.setup()`
         --
         defaults = {
+          -- Always case-insensitive grep (default was '--smart-case', which turns
+          -- case-sensitive as soon as the query contains an uppercase letter).
+          -- Inherited by live_grep, grep_string, and the live_grep_args extension.
+          vimgrep_arguments = {
+            'rg',
+            '--color=never',
+            '--no-heading',
+            '--with-filename',
+            '--line-number',
+            '--column',
+            '--ignore-case',
+          },
           layout_config = {
             bottom_pane = {
               height = 25,
@@ -459,25 +478,19 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = '[S]earch [F]iles' })
       vim.keymap.set('n', '<leader>ss', builtin.builtin, { desc = '[S]earch [S]elect Telescope' })
       vim.keymap.set({ 'n', 'v' }, '<leader>sw', builtin.grep_string, { desc = '[S]earch current [W]ord' })
-      vim.keymap.set(
-        'n',
-        '<leader>sg',
-        function() require('telescope').extensions.live_grep_args.live_grep_args() end,
-        { desc = '[S]earch by [G]rep (args)' }
-      )
+      -- Plain telescope live grep. Regex-on-each-keystroke; press <C-space> in the
+      -- picker to freeze results and fuzzy-refine them. Case-insensitive (see
+      -- defaults.vimgrep_arguments above).
+      vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = '[S]earch by [G]rep' })
       -- Browse symbol definitions in a chosen directory (LSP-free; ripgrep-backed).
       -- Prompts for a directory (defaults to the current file's), then opens live_grep_args
       -- scoped to it, pre-seeded with a regex matching common definition keywords. Clear the
       -- prompt to grep freely, or append ' -- <rg flags>' (e.g. ' -- -tpy') to narrow further.
       vim.keymap.set('n', '<leader>sS', function()
         local dir = vim.fn.expand '%:p:h'
-        if dir == '' then
-          dir = vim.fn.getcwd()
-        end
+        if dir == '' then dir = vim.fn.getcwd() end
         vim.ui.input({ prompt = 'Search symbols in dir: ', default = dir, completion = 'dir' }, function(input)
-          if not input or input == '' then
-            return
-          end
+          if not input or input == '' then return end
           require('telescope').extensions.live_grep_args.live_grep_args {
             search_dirs = { input },
             default_text = [[\b(def|class|function|interface|struct|enum|trait|impl)\b]],
@@ -732,6 +745,7 @@ require('lazy').setup({
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
         'stylua', -- Lua formatter, run via conform (not an LSP)
+        'markdownlint', -- Markdown linter, run via nvim-lint
       })
 
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
@@ -1041,16 +1055,16 @@ require('lazy').setup({
     dependencies = {
       -- Only one of these is needed.
       'sindrets/diffview.nvim', -- optional
-      'esmuellert/codediff.nvim', -- optional
+      -- 'esmuellert/codediff.nvim', -- optional
 
       -- For a custom log pager
       'm00qek/baleia.nvim', -- optional
 
       -- Only one of these is needed.
       'nvim-telescope/telescope.nvim', -- optional
-      'ibhagwan/fzf-lua', -- optional
-      'nvim-mini/mini.pick', -- optional
-      'folke/snacks.nvim', -- optional
+      -- 'ibhagwan/fzf-lua', -- optional
+      -- 'nvim-mini/mini.pick', -- optional
+      -- 'folke/snacks.nvim', -- optional
     },
     cmd = 'Neogit',
     keys = {
@@ -1060,7 +1074,9 @@ require('lazy').setup({
       require('neogit').setup {
         integrations = {
           diffview = true,
+          codediff = true,
         },
+        diff_viewer = 'diffview',
       }
     end,
   },

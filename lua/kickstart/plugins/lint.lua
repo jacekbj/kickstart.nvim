@@ -7,9 +7,9 @@ return {
   event = { 'BufReadPre', 'BufNewFile' },
   config = function()
     local lint = require 'lint'
-    lint.linters_by_ft = {
-      markdown = { 'markdownlint' },
-    }
+    -- No linters configured by filetype. Markdown linting via markdownlint is
+    -- intentionally disabled; markdownlint remains installed via Mason.
+    lint.linters_by_ft = {}
 
     -- To allow other plugins to add linters to require('lint').linters_by_ft,
     -- instead set linters_by_ft like this:
