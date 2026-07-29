@@ -902,15 +902,20 @@ require('lazy').setup({
     config = function()
       ---@diagnostic disable-next-line: missing-fields
       require('tokyonight').setup {
+        style = 'night', -- Variant used while 'background' is dark
+        light_style = 'day', -- Variant used while 'background' is light
         styles = {
           comments = { italic = false }, -- Disable italics in comments
         },
       }
 
       -- Load the colorscheme here.
-      -- Like many other themes, this one has different styles, and you could load
-      -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-      vim.cmd.colorscheme 'tokyonight-night'
+      -- Plain 'tokyonight' follows 'background' and picks `style` (dark) or
+      -- `light_style` (light); naming a variant directly, e.g.
+      -- 'tokyonight-night' or 'tokyonight-day', pins 'background' instead —
+      -- which would defeat the system light/dark switching set up in
+      -- `custom.plugins.auto-dark-mode`.
+      vim.cmd.colorscheme 'tokyonight'
     end,
   },
 
