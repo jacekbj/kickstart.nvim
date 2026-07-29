@@ -12,3 +12,6 @@ spell/
 lazy-lock.json
 
 .DS_Store
+
+# Local agent/tool settings — machine-specific, may contain local paths
+.claude/

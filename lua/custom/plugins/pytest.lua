@@ -6,15 +6,15 @@
 --   * The plugin runs `docker exec -i <container> pytest ...` — it needs the
 --     *container name/id*, not the compose service name. We resolve it at run
 --     time from `docker compose ps -q app` so it targets whichever stack is up
---     in the current directory: the main checkout (`genesis-app-1`) or an
---     orchestrator worktree (`genesis-wt<N>-app-1`). Falls back to the main
---     stack name if compose isn't reachable.
+--     in the current directory, rather than hard-coding one container name:
+--     compose derives names per project directory (`<project>-app-1`), so a
+--     worktree or a second checkout gets a different container than the main one.
 --   * `enable_docker_compose` (the plugin's own compose parser) is intentionally
 --     OFF: it expects the code to live in a sub-directory bind-mounted into the
---     container, but this repo mounts its root (`.:/app`). We map paths directly
---     instead: `docker_path = '/app'` with an empty `local_path_prefix`, so a
---     host file `<repo>/genesis_api/.../test_x.py` becomes
---     `/app/genesis_api/.../test_x.py` inside the container.
+--     container, but the projects this targets mount their root (`.:/app`). We
+--     map paths directly instead: `docker_path = '/app'` with an empty
+--     `local_path_prefix`, so a host file `<repo>/<pkg>/.../test_x.py` becomes
+--     `/app/<pkg>/.../test_x.py` inside the container.
 --
 -- Assumes Neovim's cwd is the repo root (the plugin strips that prefix to build
 -- the in-container path) and that the `app` service is already running.
@@ -35,9 +35,11 @@ return {
     require('pytest').setup {
       docker = {
         enabled = true,
+        -- No fallback name: if compose can't tell us the container, return nil so
+        -- the plugin errors out instead of silently running tests somewhere else.
         container = function()
           local result = vim.system({ 'docker', 'compose', 'ps', '-q', 'app' }, { text = true }):wait()
-          return (result.stdout or ''):match '[^\r\n]+' or 'genesis-app-1'
+          return (result.stdout or ''):match '[^\r\n]+'
         end,
         docker_path = '/app',
         local_path_prefix = '',
