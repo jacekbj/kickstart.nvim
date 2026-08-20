@@ -1144,7 +1144,19 @@ require('lazy').setup({
   },
   {
     'Pocco81/auto-save.nvim',
-    config = function() require('auto-save').setup {} end,
+    -- Bigger debounce than the 135ms default: autosave fires on `TextChanged`,
+    -- which `u` triggers, and each write runs conform's format-on-save (ruff for
+    -- Python) whose edits land as a fresh change that eats the next undo step.
+    --
+    -- Passing it to `setup{}` does nothing -- auto-save binds the delay when its
+    -- `plugin/` file first requires it, before `config` runs. So block that early
+    -- load, set the option, then start it ourselves. (Costs the `:ASToggle`
+    -- command, which lives in the file we're skipping.)
+    init = function() vim.g.loaded_auto_save = true end,
+    config = function()
+      require('auto-save.config'):set_options { debounce_delay = 1000 }
+      require('auto-save').on()
+    end,
   },
 
   -- The following comments only work if you have downloaded the kickstart repo, not just copy pasted the
