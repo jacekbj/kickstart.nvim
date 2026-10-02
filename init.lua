@@ -168,6 +168,10 @@ vim.o.scrolloff = 10
 -- See `:help 'confirm'`
 vim.o.confirm = true
 
+-- In diff mode (`:diffthis`, diffview), keep 10 unchanged lines visible around
+-- each change before folding the rest away, instead of the default 6.
+vim.opt.diffopt:append 'context:10'
+
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
@@ -908,58 +912,23 @@ require('lazy').setup({
           comments = { italic = false }, -- Disable italics in comments
         },
 
-        -- Make diffs legible. Tokyonight blends its diff backgrounds only 25%
-        -- into the background and picks `green2` (#41a6b5, a teal) for
-        -- additions, which leaves added/removed lines nearly indistinguishable
-        -- in the dark variants. Blend harder and use plain green/red so the two
-        -- differ by hue as well as brightness.
-        --
-        -- These four colours feed DiffAdd/DiffDelete/DiffChange/DiffText, which
-        -- is what `:diffthis`, diffview and neogit all derive their own diff
-        -- highlights from — so this one place covers every diff UI. Turn the
-        -- numbers up for louder diffs, down for subtler ones.
+        -- Diff colours aren't set here: `custom.github_diff` paints GitHub's
+        -- over whichever theme is loaded (see below).
         on_colors = function(c)
-          local util = require 'tokyonight.util'
-          local light = vim.o.background == 'light'
-
-          -- The 'day' variant is the dark palette run through a hue inversion,
-          -- which turns `green` into a dark olive — blending that into a light
-          -- background gives grey, not green. So mix the tints from the dark
-          -- palette in both cases.
-          local p = light and require('tokyonight.colors').styles.night or c
-
-          if light then
-            c.diff.add = util.blend_bg(p.green, 0.32) -- whole added line
-            c.diff.delete = util.blend_bg(p.red1, 0.26) -- whole removed line
-            c.diff.change = util.blend_bg(p.blue, 0.11) -- changed line: stays quiet…
-            c.diff.text = util.blend_bg(p.blue, 0.29) -- …the changed words carry it
-          else
-            c.diff.add = util.blend_bg(p.green, 0.30)
-            c.diff.delete = util.blend_bg(p.red1, 0.30)
-            c.diff.change = util.blend_bg(p.blue, 0.12)
-            c.diff.text = util.blend_bg(p.blue, 0.30)
-          end
-
           -- Tokyonight's comments are dim enough (2.8:1 against the normal
-          -- background, under the 3:1 readability floor) that they vanish
-          -- against any diff background worth seeing — a comment on an added
-          -- line sat at 1.2:1. Pull them partway towards the foreground: still
-          -- clearly subordinate to code, but legible on every diff row above.
+          -- background, under the 3:1 readability floor) that they fade further
+          -- on a tinted diff line. Pull them partway towards the foreground:
+          -- still clearly subordinate to code, but legible on every diff row.
           -- `blend_fg(x, a)` keeps `a` of x and mixes in (1 - a) of the fg.
-          c.comment = util.blend_fg(c.comment, light and 0.5 or 0.45)
-        end,
-
-        -- Neogit's own status-buffer diff draws the line *text* in a muted git
-        -- colour (a teal on green, a maroon on red) that all but disappears
-        -- against the stronger backgrounds set above. Let the text read as
-        -- ordinary text and leave the signalling to the background.
-        on_highlights = function(hl, c)
-          hl.NeogitDiffAdd = { bg = c.diff.add, fg = c.fg }
-          hl.NeogitDiffAddHighlight = { bg = c.diff.add, fg = c.fg }
-          hl.NeogitDiffDelete = { bg = c.diff.delete, fg = c.fg }
-          hl.NeogitDiffDeleteHighlight = { bg = c.diff.delete, fg = c.fg }
+          local util = require 'tokyonight.util'
+          c.comment = util.blend_fg(c.comment, vim.o.background == 'light' and 0.5 or 0.45)
         end,
       }
+
+      -- GitHub-style diff colours for `:diffthis`, diffview and neogit. It
+      -- re-applies itself on every `ColorScheme`, so register it before the
+      -- first one below.
+      require('custom.github_diff').setup()
 
       -- Load the colorscheme here.
       -- Plain 'tokyonight' follows 'background' and picks `style` (dark) or
@@ -1095,12 +1064,16 @@ require('lazy').setup({
     },
     config = function()
       require('diffview').setup {
-        -- Per-window diff highlights. Vim marks a line that exists in only one
-        -- buffer as an *addition* in whichever side has it, so a removed line
-        -- shows up green in the left pane; this remaps it to red there, and
-        -- dims the filler rows padding the other side (they hold no content),
-        -- leaving the coloured backgrounds to mark real changes only.
+        -- Dims the filler rows padding one side of a diff (they hold no
+        -- content). The two-way layouts get the full treatment from the hook
+        -- below; this still covers the merge-tool layouts.
         enhanced_diff_hl = true,
+        hooks = {
+          -- GitHub-style split: a modified line is red in the old (left) pane
+          -- and green in the new (right) one, with the changed words in a
+          -- darker shade, instead of the same DiffChange colour on both sides.
+          diff_buf_win_enter = require('custom.github_diff').diffview_win_enter,
+        },
       }
     end,
   },
