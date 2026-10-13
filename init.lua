@@ -243,6 +243,26 @@ vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper win
 vim.keymap.set('n', '<leader>o', '<C-o>', { desc = 'Jump back' })
 vim.keymap.set('n', '<leader>i', '<C-i>', { desc = 'Jump forward' })
 
+-- Personal cheatsheet: <leader>? pops up cheatsheet.md (in this config dir) in a
+-- floating window. It's the real file, so jot new shortcuts straight into it;
+-- q closes it.
+vim.keymap.set('n', '<leader>?', function()
+  local buf = vim.fn.bufadd(vim.fn.stdpath 'config' .. '/cheatsheet.md')
+  local width = math.min(80, vim.o.columns - 4)
+  local height = math.min(30, vim.o.lines - 6)
+  vim.api.nvim_open_win(buf, true, {
+    relative = 'editor',
+    width = width,
+    height = height,
+    row = math.floor((vim.o.lines - height) / 2),
+    col = math.floor((vim.o.columns - width) / 2),
+    border = 'rounded',
+    title = ' Cheatsheet ',
+    title_pos = 'center',
+  })
+  vim.keymap.set('n', 'q', '<cmd>close<CR>', { buffer = buf, desc = 'Close cheatsheet' })
+end, { desc = 'Open cheatsheet' })
+
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
 
