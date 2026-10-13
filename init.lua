@@ -1200,5 +1200,15 @@ require('lazy').setup({
   },
 })
 
+-- Keep plugins on their latest commits: lazy-lock.json is gitignored, so
+-- nothing is pinned, and this runs `:Lazy update` in the background once
+-- startup has finished. Updated code takes effect after a restart; see what
+-- changed with `:Lazy log`.
+vim.api.nvim_create_autocmd('User', {
+  pattern = 'VeryLazy',
+  once = true,
+  callback = function() require('lazy').update { show = false } end,
+})
+
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
